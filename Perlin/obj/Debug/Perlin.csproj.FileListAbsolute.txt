@@ -1,0 +1,7 @@
+C:\Users\jkerxhalli\source\repos\Perlin\Perlin\bin\Debug\Perlin.exe.config
+C:\Users\jkerxhalli\source\repos\Perlin\Perlin\bin\Debug\Perlin.exe
+C:\Users\jkerxhalli\source\repos\Perlin\Perlin\bin\Debug\Perlin.pdb
+C:\Users\jkerxhalli\source\repos\Perlin\Perlin\obj\Debug\Perlin.csprojResolveAssemblyReference.cache
+C:\Users\jkerxhalli\source\repos\Perlin\Perlin\obj\Debug\Perlin.csproj.CoreCompileInputs.cache
+C:\Users\jkerxhalli\source\repos\Perlin\Perlin\obj\Debug\Perlin.exe
+C:\Users\jkerxhalli\source\repos\Perlin\Perlin\obj\Debug\Perlin.pdb
