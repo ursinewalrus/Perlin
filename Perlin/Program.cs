@@ -12,21 +12,21 @@ namespace Perlin
     {
         static void Main(string[] args)
         {
-            var bm = new Bitmap(100, 100);
+            var bm = new Bitmap(500, 500);
             List<double> noiseVals = new List<double>();
 
             var rand = new Random();
-            for (var i = 0; i < 100; i++)
+            for (var i = 0; i < 500; i++)
             {
-                for (var j = 0; j < 100; j++)
+                for (var j = 0; j < 500; j++)
                 {
-                    var wiggleX = rand.NextDouble();
-                    var wiggleY = rand.NextDouble();
+                    var wiggleX = .5; rand.NextDouble();
+                    var wiggleY = .5; rand.NextDouble();
                     var noise = new Perlin(i + wiggleX, j + wiggleY, 1).NoiseValue;
-                    int maxColor = 128;//16777215;
-                    int noiseColor = (int)(maxColor*noise);
-                    var noiseHexColor = Convert.ToInt32((0xFF0000 + noiseColor).ToString("X"),16);
-                    bm.SetPixel(i,j,Color.FromArgb(noiseHexColor));
+                    int maxColor = 255;// 16777215;
+                    int noiseColor = (int)(maxColor* ((noise)>.5?0:1));
+                    //var noiseHexColor = int.Parse((0xFF + noiseColor).ToString("X"),System.Globalization.NumberStyles.HexNumber);
+                    bm.SetPixel(i,j,Color.FromArgb(125, noiseColor, noiseColor, noiseColor));
 
                 }
             }
