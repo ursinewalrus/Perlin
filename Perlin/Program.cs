@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Drawing;
 
-//https://flafla2.github.io/2014/08/09/perlinnoise.html
+//http://flafla2.github.io/2014/08/09/perlinnoise.html
 namespace Perlin
 {
     class Program
@@ -17,21 +17,42 @@ namespace Perlin
             List<double> noiseVals = new List<double>();
 
             var rand = new Random();
+
+
+            //same whole time
+            int octaves = 10;
+            double persistence = 5;
+
             for (var i = 0; i < 500; i++)
             {
                 for (var j = 0; j < 500; j++)
                 {
-                    var wiggleX = .5; rand.NextDouble();
-                    var wiggleY = .5; rand.NextDouble();
-                    var noise = new Perlin(i + wiggleX, j + wiggleY, 1).NoiseValue;
-                    int maxColor = 255;// 16777215;
+                    var wiggleX = rand.NextDouble();
+                    var wiggleY = rand.NextDouble();
 
-                    int noiseColor = (int)(maxColor* ((noise)>.5?0:1));
+                    double frequency = 32;
+                    double amplitude = 16;
+                    double maxNoiseRange = 0;
+                    double summedNoise = 0;
+
+                    for (int x = 0; x < octaves; x++)
+                    {
+
+                        summedNoise += new Perlin((i + wiggleX)*frequency, (j + wiggleY)*frequency, 1.0).NoiseValue * amplitude;
+                        maxNoiseRange += amplitude;
+                        amplitude *= persistence;
+                        frequency *= 2;
+                    }
+                    var noise = summedNoise/maxNoiseRange;
+
+                    #region ColorSetWithNoise
+                    int maxColor = 255;
+                    int noiseColor = (int)(maxColor * ((noise) > .5 ? 0 : 1));
                     //var noiseHexColor = int.Parse((0xFF + noiseColor).ToString("X"),System.Globalization.NumberStyles.HexNumber);
                     bmPerlin.SetPixel(i,j,Color.FromArgb(125, noiseColor, noiseColor, noiseColor));
-
                     var randSel = (int)(maxColor * ((rand.NextDouble()) > .5 ? 0 : 1));
                     bmRand.SetPixel(i, j, Color.FromArgb(125, randSel, randSel, randSel));
+                    #endregion
 
 
 
