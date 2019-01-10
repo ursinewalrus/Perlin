@@ -12,58 +12,71 @@ namespace Perlin
     {
         static void Main(string[] args)
         {
-            var bmPerlin = new Bitmap(500, 500);
             List<double> noiseVals = new List<double>();
 
             var rand = new Random();
 
 
-            //same whole time
-            int octaves = 25;
-            double persistence = .25;
+            //depth should be one always until we figure out transparency
+            var noiseDims = Perlin.GenerateNoiseDimensions(height: 500,
+                width: 500,
+                depth: 1,
+                octaves: 25,
+                persistence: 1,
+                frequency: 8,
+                amplitude: 64
+            );
 
-            for (var i = 0; i < 500; i++)
+            Map3DNoiseArrayToImage("perlin", 18, noiseDims);
+            #region ColorSetWithNoise
+
+            //int maxColor = 255;
+            //int noiseColor = (int)(maxColor * ((noise) > .5 ? 0 : 1));
+            //int noiseSel = (int)(maxColor * noise);
+            //bmPerlin.SetPixel(i, j, Color.FromArgb(125, noiseColor, noiseColor, noiseColor));
+            //var randSel = (int)(maxColor * ((rand.NextDouble()) > .5 ? 0 : 1));
+
+            #endregion
+
+            ;
+        }
+
+        public static void Map3DNoiseArrayToImage(string imageName, int gradients, double[,,] noiseVals)
+        {
+            int maxColor = 255;
+            double gradientFractions = 1.0/(double) gradients;
+            
+            var height = noiseVals.GetLength(0);
+            var width = noiseVals.GetLength(1);
+            var depth = noiseVals.GetLength(2);
+            var bmPerlin = new Bitmap(width, height);
+
+            for (int h = 0; h < height; h++)
             {
-                for (var j = 0; j < 500; j++)
+                for (int w = 0; w < width; w++)
                 {
-
-                    double frequency = 16;
-                    double amplitude = 1;
-                    double maxNoiseRange = 0;
-                    double summedNoise = 0;
-
-                    for (int x = 0; x < octaves; x++)
+                    for (int d = 0; d < depth; d++)
                     {
+                        double noiseVal = noiseVals[h, w, d];
 
-                        summedNoise += new Perlin(((double)i/500 )*frequency, ((double)j/500)*frequency, 1.0).NoiseValue * amplitude;
-                        maxNoiseRange += amplitude;
-                        amplitude *= persistence;
-                        frequency *= 2;
+                        var colorSnapTo = Math.Floor(noiseVal/gradientFractions);
+                        //int noiseColor = (int)(maxColor * Perlin.Fade(colorSnapTo * gradientFractions));
+                        int noiseColor = (int)(maxColor * colorSnapTo * gradientFractions);
+                        //maybe set something so you can just do r,g,b or transparency
+                        bmPerlin.SetPixel(h, w, Color.FromArgb(255, noiseColor, noiseColor, noiseColor));
+
                     }
-                    var noise = summedNoise/maxNoiseRange;
-
-                    #region ColorSetWithNoise
-                    int maxColor = 255;
-                    int noiseColor = (int)(maxColor * ((noise) > .5 ? 0 : 1));
-                    int noiseSel = (int)(maxColor * noise);
-                    bmPerlin.SetPixel(i,j,Color.FromArgb(125, noiseColor, noiseColor, noiseColor));
-                    var randSel = (int)(maxColor * ((rand.NextDouble()) > .5 ? 0 : 1));
-                    #endregion
-
-
-
                 }
             }
+            bmPerlin.Save(imageName+".png");
 
-            bmPerlin.Save("perlinNoise.png");
-            ;
         }
     }
 
-    public class Perlin
+    public static class Perlin
     {
 
-        private List<int> permutation = new List<int>() {
+        private static List<int> permutation = new List<int>() {
             151,160,137,91,90,15,                
             131,13,201,95,96,53,194,233,7,225,140,36,103,30,69,142,8,99,37,240,21,10,23,    
             190, 6,148,247,120,234,75,0,26,197,62,94,252,219,203,117,35,11,32,57,177,33,
@@ -78,11 +91,47 @@ namespace Perlin
             49,192,214, 31,181,199,106,157,184, 84,204,176,115,121,50,45,127, 4,150,254,
             138,236,205,93,222,114,67,29,24,72,243,141,128,195,78,66,215,61,156,180
         };
-
-        public double NoiseValue;
-        public Perlin(double x, double y, double z)
+        
+        static Perlin()
         {
             permutation.AddRange(new List<int>(permutation));
+        }
+        //http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch05.html
+        public static double[,,] GenerateNoiseDimensions(int height = 100,int width = 100, int depth = 1,int octaves = 1, double persistence = .25, double frequency = 1, double amplitude = 1)
+        {
+            double[,,] noiseDims = new double[height,width,depth];
+            for (int h = 1; h <= height; h++)
+            {
+                for (int w = 1; w <= width; w++)
+                {
+                    for (int d = 1; d <= depth; d++)
+                    {
+                        var noiseTotal = 0.0;
+                        var maxNoiseTotal = 0.0;
+                        var freq = frequency;
+                        var amp = amplitude;
+                        for (int o = 0; o < octaves; o++)
+                        {
+                             noiseTotal +=
+                                GetNoiseValue( (double)h / (double)height * freq, 
+                                               (double)w / (double)width * freq, 
+                                               (double)d / (double)depth * freq) * amp;
+                            maxNoiseTotal += amp;
+                            amp *= persistence;
+                            freq *= 2;
+
+
+                        }
+                        noiseDims[h - 1,w - 1,d - 1] = noiseTotal/maxNoiseTotal;
+
+                    }
+                }
+            }
+            return noiseDims;
+        }
+
+        static double GetNoiseValue(double x, double y, double z)
+        {
 
             //upper, leftmost cord
             int cubeX = (int) x % 255;
@@ -95,9 +144,9 @@ namespace Perlin
             var zf = z - (int) z;
 
             //for lerp
-            double xu = fade(xf);
-            double yv = fade(yf);
-            double zw = fade(zf);
+            double xu = Fade(xf);
+            double yv = Fade(yf);
+            double zw = Fade(zf);
 
             var x1 = Lerp(
                         PerlinGradient(
@@ -128,23 +177,25 @@ namespace Perlin
 
             var y2 = Lerp(x1, x2, yv);
 
-            NoiseValue = (Lerp(y1,y2,zw)+1)/2;
+            return (Lerp(y1,y2,zw)+1)/2;
         }
 
-
-
-        public double Lerp(double a, double b, double x)
+        static double Lerp(double a, double b, double x)
         {
             return a + x * (b - a);
         }
 
         //for smoothing, moves vales towards 0,1??
-        public double fade(double t)
+        public static double Fade(double t)
         {
             return t*t*t*(t*(t*6 - 15) + 10);
         }
 
-        public int PerlinHash(int x, int y, int z)
+        public static double FadeFifth(double t)
+        {
+            return 6*(Math.Pow(t, 6) - 15*Math.Pow(t, 4) + 3*Math.Pow(t, 3));
+        }
+        static int PerlinHash(int x, int y, int z)
         {
             var step1 =  permutation[x] + y;
             var step2 = permutation[step1];
@@ -152,7 +203,7 @@ namespace Perlin
         }
 
         //hash is our random seed based on cube, x,y,z our position in the cube
-        public double PerlinGradient(int hash, double x, double y, double z)
+        static double PerlinGradient(int hash, double x, double y, double z)
         {
             switch (hash & 0xF)
             {
@@ -174,19 +225,6 @@ namespace Perlin
                 case 0xF: return -y - z;
                 default: return 0; // never happens
             }
-        }
-    }
-
-    public class Vector3
-    {
-        public int X;
-        public int Y;
-        public int Z;
-        public Vector3(int x, int y, int z)
-        {
-            X = x;
-            Y = y;
-            Z = z;
         }
     }
 }
