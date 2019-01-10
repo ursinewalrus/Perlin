@@ -13,32 +13,29 @@ namespace Perlin
         static void Main(string[] args)
         {
             var bmPerlin = new Bitmap(500, 500);
-            var bmRand = new Bitmap(500, 500);
             List<double> noiseVals = new List<double>();
 
             var rand = new Random();
 
 
             //same whole time
-            int octaves = 10;
-            double persistence = 5;
+            int octaves = 25;
+            double persistence = .25;
 
             for (var i = 0; i < 500; i++)
             {
                 for (var j = 0; j < 500; j++)
                 {
-                    var wiggleX = rand.NextDouble();
-                    var wiggleY = rand.NextDouble();
 
-                    double frequency = 32;
-                    double amplitude = 16;
+                    double frequency = 16;
+                    double amplitude = 1;
                     double maxNoiseRange = 0;
                     double summedNoise = 0;
 
                     for (int x = 0; x < octaves; x++)
                     {
 
-                        summedNoise += new Perlin((i + wiggleX)*frequency, (j + wiggleY)*frequency, 1.0).NoiseValue * amplitude;
+                        summedNoise += new Perlin(((double)i/500 )*frequency, ((double)j/500)*frequency, 1.0).NoiseValue * amplitude;
                         maxNoiseRange += amplitude;
                         amplitude *= persistence;
                         frequency *= 2;
@@ -48,10 +45,9 @@ namespace Perlin
                     #region ColorSetWithNoise
                     int maxColor = 255;
                     int noiseColor = (int)(maxColor * ((noise) > .5 ? 0 : 1));
-                    //var noiseHexColor = int.Parse((0xFF + noiseColor).ToString("X"),System.Globalization.NumberStyles.HexNumber);
+                    int noiseSel = (int)(maxColor * noise);
                     bmPerlin.SetPixel(i,j,Color.FromArgb(125, noiseColor, noiseColor, noiseColor));
                     var randSel = (int)(maxColor * ((rand.NextDouble()) > .5 ? 0 : 1));
-                    bmRand.SetPixel(i, j, Color.FromArgb(125, randSel, randSel, randSel));
                     #endregion
 
 
@@ -60,7 +56,6 @@ namespace Perlin
             }
 
             bmPerlin.Save("perlinNoise.png");
-            bmRand.Save("randomNoise.png");
             ;
         }
     }
