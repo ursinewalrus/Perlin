@@ -1,9 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using PerlinGenerator;
+using Color = Microsoft.Xna.Framework.Color;
+using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
 namespace PerlineHexAssetCreator
 {
@@ -17,7 +20,11 @@ namespace PerlineHexAssetCreator
         Texture2D canvas;
         Rectangle tracedSize;
         UInt32[] pixels;
+        private int[,] BackingNoise;
 
+
+
+        private int HexSize = 100;
         public Game1()
         {
             graphics = new GraphicsDeviceManager(this);
@@ -36,6 +43,8 @@ namespace PerlineHexAssetCreator
             tracedSize = GraphicsDevice.PresentationParameters.Bounds;
             canvas = new Texture2D(GraphicsDevice, tracedSize.Width, tracedSize.Height, false, SurfaceFormat.Color);
             pixels = new UInt32[tracedSize.Width * tracedSize.Height];
+            this.IsMouseVisible = true;
+
             base.Initialize();
         }
 
@@ -84,6 +93,7 @@ namespace PerlineHexAssetCreator
                     amplitude: 32
                 );
                 var noiseColors = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, NoiseArray);
+                BackingNoise = noiseColors;
                 for (int i = 0; i < NoiseArray.GetLength(0);i++)
                 {
                     for (int j = 0; j < NoiseArray.GetLength(1); j++)
@@ -106,9 +116,19 @@ namespace PerlineHexAssetCreator
         /// This is called when the game should draw itself.
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
+        private ButtonState ClickState;
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.Clear(Color.White);
+            var a = ClickState;
+            if (ClickState == ButtonState.Pressed && Mouse.GetState().LeftButton == ButtonState.Released)
+            {
+                var xpos = Mouse.GetState().X;
+                var ypos = Mouse.GetState().Y;
+                BuildImage(xpos ,ypos);
+            }
+            ClickState = Mouse.GetState().LeftButton;
+
 
 
             // TODO: Add your drawing code here
@@ -116,7 +136,37 @@ namespace PerlineHexAssetCreator
             spriteBatch.Draw(canvas, new Rectangle(0, 0, 500, 500), Color.Gray);
             spriteBatch.End();
             base.Draw(gameTime);
+        }
 
+        /*
+         * The horizontal distance between adjacent hexagon centers is w * 3/4. The vertical distance between adjacent hexagon centers is h.
+         */
+        public void BuildImage(int x, int y)
+        {
+            var bmImage = new Bitmap(HexSize,HexSize);
+            var hexClicked = SelectedHex(x, y);
+            for (var i = Math.Max(0,x-(HexSize/2)); i < Math.Min(tracedSize.Width, x+HexSize/2); i++)
+            {
+                for (var j = Math.Max(0, x - (HexSize / 2)); j < Math.Min(tracedSize.Width, x + HexSize / 2); j++)
+                {
+                    
+                    ;
+                    var hexAt = SelectedHex(i, j);
+                    if (hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"])
+                        bmImage.SetPixel(i,j, System.Drawing.Color.FromArgb(255,BackingNoise[i,j], BackingNoise[i, j], BackingNoise[i, j]));
+                    else
+                        bmImage.SetPixel(i,j, System.Drawing.Color.FromArgb(0,BackingNoise[i,j], BackingNoise[i, j], BackingNoise[i, j]));
+                }
+            }
+        }
+
+        public Dictionary<string, int> SelectedHex(int x, int y)
+        {
+            var R = (int) Math.Round((2.0f/3.0f*y)/HexSize);
+            var Q = (int) Math.Round(((Math.Sqrt(3)/3*x) - (1.0f/3.0f*y))/HexSize);
+            return new Dictionary<string, int>() {
+                { "X", R},
+                { "Y", Q}};
         }
     }
 }
