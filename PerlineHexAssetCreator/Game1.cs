@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Drawing;
+using System.IO;
+using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
@@ -146,7 +148,7 @@ namespace PerlineHexAssetCreator
             //tracedsize does not match the canvas size at all
             var bmImage = new Bitmap(HexSize,HexSize);
             var hexClicked = SelectedHex(x, y);
-
+            var logText = new StringBuilder();
             for (var i = Math.Max(0,x-(HexSize/2)); i < Math.Min(tracedSize.Width, x+HexSize/2); i++)
             {
                 for (var j = Math.Max(0, y - (HexSize / 2)); j < Math.Min(tracedSize.Height, y + HexSize / 2); j++)
@@ -154,14 +156,18 @@ namespace PerlineHexAssetCreator
                     
                     ;
                     var hexAt = SelectedHex(i, j);
-                    //if (hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"])
-                    //    bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(255,BackingNoise[i,j], BackingNoise[i, j], BackingNoise[i, j]));
-                    //else
-                    //    bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(0,BackingNoise[i,j], BackingNoise[i, j], BackingNoise[i, j]));
-                    bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.Red);
+                    if (hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"])
+                        bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(255, BackingNoise[i, j], BackingNoise[i, j], BackingNoise[i, j]));
+                    else
+                        bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(0, BackingNoise[i, j], BackingNoise[i, j], BackingNoise[i, j]));
+                    logText.Append( "Setting pixel "  + (i - Math.Max(0, x - (HexSize / 2))).ToString() + " " + (j - Math.Max(0, y - (HexSize / 2))).ToString() + ((hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"]) ? " color " : " transparent") + BackingNoise[i,j].ToString() + "\r\n");
+                    var t = bmImage.GetPixel(i - Math.Max(0, x - (HexSize/2)), j - Math.Max(0, y - (HexSize/2)));
+                    ;
+                    //bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.Red);
 
                 }
             }
+            File.AppendAllText(@"C:\Users\jkerxhalli\Desktop\golf\PixelLog.txt", logText.ToString());
             bmImage.Save(@"C:\Users\jkerxhalli\Desktop\golf\selected.png");
 
         }
