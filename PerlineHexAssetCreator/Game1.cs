@@ -84,8 +84,8 @@ namespace PerlineHexAssetCreator
                 Exit();
             if (GenNewNoise)
             {
-                NoiseArray = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: 500,
-                    width: 500,
+                NoiseArray = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
+                    width: tracedSize.Width,
                     depth: 1,
                     octaves: 25,
                     persistence: .25,
@@ -101,7 +101,7 @@ namespace PerlineHexAssetCreator
                         Int32 noiseColor = noiseColors[i, j];
                         var hexNoiseVal = noiseColor.ToString("X") + noiseColor.ToString("X") + noiseColor.ToString("X") + noiseColor.ToString("X");
                         var hexVal = (uint)int.Parse(hexNoiseVal, System.Globalization.NumberStyles.HexNumber);
-                        pixels[j*NoiseArray.GetLength(1) + i] = hexVal; //0xFF000000;
+                        pixels[i*NoiseArray.GetLength(1) + j] = hexVal; //0xFF000000;
                     }
                 }
                 canvas.SetData<UInt32>(pixels, 0, tracedSize.Width * tracedSize.Height);
@@ -143,21 +143,27 @@ namespace PerlineHexAssetCreator
          */
         public void BuildImage(int x, int y)
         {
+            //tracedsize does not match the canvas size at all
             var bmImage = new Bitmap(HexSize,HexSize);
             var hexClicked = SelectedHex(x, y);
+
             for (var i = Math.Max(0,x-(HexSize/2)); i < Math.Min(tracedSize.Width, x+HexSize/2); i++)
             {
-                for (var j = Math.Max(0, x - (HexSize / 2)); j < Math.Min(tracedSize.Width, x + HexSize / 2); j++)
+                for (var j = Math.Max(0, y - (HexSize / 2)); j < Math.Min(tracedSize.Height, y + HexSize / 2); j++)
                 {
                     
                     ;
                     var hexAt = SelectedHex(i, j);
-                    if (hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"])
-                        bmImage.SetPixel(i,j, System.Drawing.Color.FromArgb(255,BackingNoise[i,j], BackingNoise[i, j], BackingNoise[i, j]));
-                    else
-                        bmImage.SetPixel(i,j, System.Drawing.Color.FromArgb(0,BackingNoise[i,j], BackingNoise[i, j], BackingNoise[i, j]));
+                    //if (hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"])
+                    //    bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(255,BackingNoise[i,j], BackingNoise[i, j], BackingNoise[i, j]));
+                    //else
+                    //    bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(0,BackingNoise[i,j], BackingNoise[i, j], BackingNoise[i, j]));
+                    bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.Red);
+
                 }
             }
+            bmImage.Save(@"C:\Users\jkerxhalli\Desktop\golf\selected.png");
+
         }
 
         public Dictionary<string, int> SelectedHex(int x, int y)
