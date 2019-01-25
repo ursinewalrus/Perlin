@@ -135,7 +135,7 @@ namespace PerlineHexAssetCreator
 
             // TODO: Add your drawing code here
             spriteBatch.Begin();
-            spriteBatch.Draw(canvas, new Rectangle(0, 0, 500, 500), Color.Gray);
+            spriteBatch.Draw(canvas, new Rectangle(0, 0, tracedSize.Width, tracedSize.Height), Color.Gray);
             spriteBatch.End();
             base.Draw(gameTime);
         }
