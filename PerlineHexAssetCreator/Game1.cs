@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Drawing;
 using System.IO;
 using System.Text;
@@ -22,7 +23,10 @@ namespace PerlineHexAssetCreator
         Texture2D canvas;
         Rectangle tracedSize;
         UInt32[] pixels;
-        private int[,] BackingNoise;
+        private int[,] BackingNoiseR;
+        private int[,] BackingNoiseG;
+        private int[,] BackingNoiseB;
+
 
 
 
@@ -79,31 +83,61 @@ namespace PerlineHexAssetCreator
         /// 
         private bool GenNewNoise = true;
 
-        private double[,,] NoiseArray;
+        private double[,,] NoiseArrayR;
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
             if (GenNewNoise)
             {
-                NoiseArray = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
+                NoiseArrayR = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
                     width: tracedSize.Width,
                     depth: 1,
                     octaves: 25,
                     persistence: .25,
-                    frequency: 16,
+                    frequency: 4,
                     amplitude: 32
                 );
-                var noiseColors = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, NoiseArray);
-                BackingNoise = noiseColors;
-                for (int i = 0; i < NoiseArray.GetLength(0);i++)
+                var noiseColorsR = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, NoiseArrayR);
+                noiseColorsR = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColorsR, .5);
+                BackingNoiseR = noiseColorsR;
+                
+                var noiseArrayG = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
+                    width: tracedSize.Width,
+                    depth: 1,
+                    octaves: 25,
+                    persistence: .25,
+                    frequency: 8,
+                    amplitude: 16
+                );
+                var noiseColorsG = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, noiseArrayG);
+                noiseColorsG = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColorsG, 1.5);
+
+                BackingNoiseG = noiseColorsG;
+
+                var noiseArrayB = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
+                    width: tracedSize.Width,
+                    depth: 1,
+                    octaves: 25,
+                    persistence: .25,
+                    frequency: 8,
+                    amplitude: 16
+                );
+                var noiseColorsB = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, noiseArrayB);
+                noiseColorsB = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColorsB, .5);
+                BackingNoiseB = noiseColorsB;
+
+                for (int i = 0; i < NoiseArrayR.GetLength(0);i++)
                 {
-                    for (int j = 0; j < NoiseArray.GetLength(1); j++)
+                    for (int j = 0; j < NoiseArrayR.GetLength(1); j++)
                     {
-                        Int32 noiseColor = noiseColors[i, j];
-                        var hexNoiseVal = noiseColor.ToString("X") + noiseColor.ToString("X") + noiseColor.ToString("X") + noiseColor.ToString("X");
+                        Int32 noiseColorR = noiseColorsR[i, j];
+                        Int32 noiseColorG = noiseColorsG[i, j];
+                        Int32 noiseColorB = noiseColorsB[i, j];
+                        //no A on this atm, toggleable make
+                        var hexNoiseVal = "FF" +  noiseColorR.ToString("X") + noiseColorG.ToString("X") + noiseColorB.ToString("X");
                         var hexVal = (uint)int.Parse(hexNoiseVal, System.Globalization.NumberStyles.HexNumber);
-                        pixels[i*NoiseArray.GetLength(1) + j] = hexVal; //0xFF000000;
+                        pixels[i*NoiseArrayR.GetLength(1) + j] = hexVal; //0xFF000000;
                     }
                 }
                 canvas.SetData<UInt32>(pixels, 0, tracedSize.Width * tracedSize.Height);
@@ -113,7 +147,6 @@ namespace PerlineHexAssetCreator
             // TODO: Add your update logic here
             base.Update(gameTime);
         }
-
         /// <summary>
         /// This is called when the game should draw itself.
         /// </summary>
@@ -123,11 +156,15 @@ namespace PerlineHexAssetCreator
         {
             GraphicsDevice.Clear(Color.White);
             var a = ClickState;
-            if (ClickState == ButtonState.Pressed && Mouse.GetState().LeftButton == ButtonState.Released)
+            if (ClickState == ButtonState.Pressed && Mouse.GetState().LeftButton == ButtonState.Released && this.IsActive)
             {
                 var xpos = Mouse.GetState().X;
                 var ypos = Mouse.GetState().Y;
                 BuildImage(xpos ,ypos);
+            }
+            else
+            {
+
             }
             ClickState = Mouse.GetState().LeftButton;
 
@@ -145,31 +182,47 @@ namespace PerlineHexAssetCreator
          */
         public void BuildImage(int x, int y)
         {
-            //tracedsize does not match the canvas size at all
-            var bmImage = new Bitmap(HexSize,HexSize);
-            var hexClicked = SelectedHex(x, y);
+            var bmImage = new Bitmap(HexSize, HexSize);
+            //var hexClicked = SelectedHex(x, y);
             var logText = new StringBuilder();
-            for (var i = Math.Max(0,x-(HexSize/2)); i < Math.Min(tracedSize.Width, x+HexSize/2); i++)
+            for (var i = Math.Max(0, x - (HexSize / 2)); i < Math.Min(tracedSize.Width, x + HexSize / 2); i++)
             {
                 for (var j = Math.Max(0, y - (HexSize / 2)); j < Math.Min(tracedSize.Height, y + HexSize / 2); j++)
                 {
                     
                     ;
-                    var hexAt = SelectedHex(i, j);
-                    if (hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"])
-                        bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(255, BackingNoise[i, j], BackingNoise[i, j], BackingNoise[i, j]));
+                    //if(i > x - 5 && i < x + 5  && j > y - 5 && j < y + 5)
+                    //    bmImage.SetPixel(i,
+                    //        j,
+                    //        System.Drawing.Color.Red);
+                    if(InSameHexAsCenter(x,y,i,j))
+                        bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(255, BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]));
                     else
-                        bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(0, BackingNoise[i, j], BackingNoise[i, j], BackingNoise[i, j]));
-                    logText.Append( "Setting pixel "  + (i - Math.Max(0, x - (HexSize / 2))).ToString() + " " + (j - Math.Max(0, y - (HexSize / 2))).ToString() + ((hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"]) ? " color " : " transparent") + BackingNoise[i,j].ToString() + "\r\n");
-                    var t = bmImage.GetPixel(i - Math.Max(0, x - (HexSize/2)), j - Math.Max(0, y - (HexSize/2)));
+                        bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(0, BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]));
+
+                    //logText.Append( "Setting pixel "  + (i - Math.Max(0, x - (HexSize / 2))).ToString() + " " + (j - Math.Max(0, y - (HexSize / 2))).ToString() + ((hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"]) ? " color " : " transparent") + BackingNoise[i,j].ToString() + "\r\n");
                     ;
                     //bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.Red);
 
                 }
             }
-            File.AppendAllText(@"C:\Users\jkerxhalli\Desktop\golf\PixelLog.txt", logText.ToString());
-            bmImage.Save(@"C:\Users\jkerxhalli\Desktop\golf\selected.png");
+            File.AppendAllText(Path.Combine(Environment.CurrentDirectory, "pixelLog.txt"), logText.ToString());
+            bmImage.Save(Path.Combine(@"C:\Users\kk\Desktop\Hexes\Hexes\Modules\MainModule\Content\Backgrounds", "capturedHex.png"));
+            Process.Start(Path.Combine(@"C:\Users\kk\Desktop\Hexes\Hexes\Modules\MainModule\Content\Backgrounds", "capturedHex.png"));
 
+        }
+
+        public bool InSameHexAsCenter(int centerX, int centerY, int posX, int posY)
+        {
+            //http://www.playchilla.com/how-to-check-if-a-point-is-inside-a-hexagon
+            var distX = Math.Abs(posX - centerX);
+            var distY = Math.Abs(posY - centerY);
+            //wtheck is this magic BS
+            var horiDist = HexSize * .44;
+            var vertDist = HexSize * .5;
+            if (distX > horiDist || distY > vertDist)
+                return false;
+            return (horiDist * vertDist) - ((vertDist/2) * distX) - (horiDist * distY) >= 0; 
         }
 
         public Dictionary<string, int> SelectedHex(int x, int y)
@@ -177,8 +230,10 @@ namespace PerlineHexAssetCreator
             var R = (int) Math.Round((2.0f/3.0f*y)/HexSize);
             var Q = (int) Math.Round(((Math.Sqrt(3)/3*x) - (1.0f/3.0f*y))/HexSize);
             return new Dictionary<string, int>() {
-                { "X", R},
-                { "Y", Q}};
+                { "U", R},
+                { "V", Q}
+            };
         }
+
     }
 }

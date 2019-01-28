@@ -60,6 +60,7 @@ namespace PerlinGenerator
             }
             return colorVals;
         }
+        //basically gens a greyscale, give arg to change that
         //http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch05.html
         public static double[,,] GenerateNoiseDimensions(int height = 100, int width = 100, int depth = 1, int octaves = 1, double persistence = .25, double frequency = 1, double amplitude = 1)
         {
@@ -189,6 +190,18 @@ namespace PerlinGenerator
                 case 0xF: return -y - z;
                 default: return 0; // never happens
             }
+        }
+
+        public static int[,] Multiply2dArray(int[,] array, double multiplier)
+        {
+            for (var i = 0; i < array.GetLength(0); i++)
+            {
+                for(var j = 0; j < array.GetLength(1); j++)
+                {
+                    array[i, j] = Math.Min(255,(int)(array[i, j] * multiplier));
+                }
+            }
+            return array;
         }
     }
 }
