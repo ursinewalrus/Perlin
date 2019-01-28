@@ -7,7 +7,11 @@ using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using PerlinControls;
+using System.Xaml;
 using PerlinGenerator;
+using System.Windows;
+using System.Threading;
 using Color = Microsoft.Xna.Framework.Color;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 
@@ -26,8 +30,8 @@ namespace PerlineHexAssetCreator
         private int[,] BackingNoiseR;
         private int[,] BackingNoiseG;
         private int[,] BackingNoiseB;
-
-
+        private MainWindow Mw;
+        private int[] SwapTime = new int[] {1};
 
 
         private int HexSize = 100;
@@ -36,7 +40,6 @@ namespace PerlineHexAssetCreator
             graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
         }
-
         /// <summary>
         /// Allows the game to perform any initialization it needs to before starting to run.
         /// This is where it can query for any required services and load any non-graphic
@@ -51,7 +54,22 @@ namespace PerlineHexAssetCreator
             pixels = new UInt32[tracedSize.Width * tracedSize.Height];
             this.IsMouseVisible = true;
 
+            //https://stackoverflow.com/questions/2329978/the-calling-thread-must-be-sta-because-many-ui-components-require-this
+            //Application.Current.Dispatcher.Invoke((Action) delegate
+            //{
+            //    wM.Run(new PerlinControls.MainWindow());
+            //});
+            Thread t = new Thread(() =>
+            {
+                var app = new App();
+                Mw = new MainWindow();
+                Mw.SetSwap(SwapTime);
+                app.Run(Mw);
+            });
+            t.SetApartmentState(ApartmentState.STA);
+            t.Start();
             base.Initialize();
+
         }
 
         /// <summary>
@@ -156,7 +174,8 @@ namespace PerlineHexAssetCreator
         {
             GraphicsDevice.Clear(Color.White);
             var a = ClickState;
-            if (ClickState == ButtonState.Pressed && Mouse.GetState().LeftButton == ButtonState.Released && this.IsActive)
+            if (ClickState == ButtonState.Pressed && Mouse.GetState().LeftButton == ButtonState.Released && this.IsActive && System.Windows.Forms.Form.ActiveForm ==
+    (System.Windows.Forms.Control.FromHandle(Window.Handle) as System.Windows.Forms.Form))
             {
                 var xpos = Mouse.GetState().X;
                 var ypos = Mouse.GetState().Y;
@@ -233,6 +252,11 @@ namespace PerlineHexAssetCreator
                 { "U", R},
                 { "V", Q}
             };
+        }
+
+        public void ReInitCanvas()
+        {
+            ;
         }
 
     }
