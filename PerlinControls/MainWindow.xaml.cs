@@ -25,7 +25,22 @@ namespace PerlinControls
     {
         private IDatabase DB;
         private PerlinVarsModel Model;
-        private int[] SwapTime;
+        private PerlinReInit SwapTime;
+        private double OldRed;
+        private double OldGreen;
+        private double OldBlue;
+        private int OldOctaves;
+        private double OldPersistence;
+        private int OldFrequency;
+        private int OldAmplitude;
+
+
+        public enum PerlinReInit
+        {
+            All,
+            Color,
+            None
+        }
 
         public MainWindow()
         {
@@ -34,26 +49,30 @@ namespace PerlinControls
             Model = new PerlinVarsModel();
             InitializeComponent();
 
-            RedMix.Value = Model.RedValueMultiplier;
-            GreenMix.Value = Model.GreenValueMultiplier;
-            BlueMix.Value = Model.BlueValueMultiplier;
-
+            RedMix.Value = OldRed = Model.RedValueMultiplier;
+            GreenMix.Value = OldGreen = Model.GreenValueMultiplier;
+            BlueMix.Value = OldBlue = Model.BlueValueMultiplier;
+            Octaves.Value = OldOctaves = Model.PerlinOctaves;
+            Persistence.Value = OldPersistence = Model.PerlinPersistence;
+            Frequency.Value = OldFrequency = Model.PerlinFrequency;
+            Amplitude.Value = OldAmplitude = Model.PerlinAmplitude;
+            ;
         }
 
-        public void SetSwap(int[] swap)
+        public void SetSwap(PerlinReInit swap)
         {
             SwapTime = swap;
         }
 
 
-        public void RBGValChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
+        public void SliderValChanged(object sender, RoutedPropertyChangedEventArgs<double> e)
         {
             DependencyObject dobj = sender as DependencyObject;
             string name = dobj.GetValue(FrameworkElement.NameProperty) as string;
             //switch (name)
             //{
             //    case "RedMix":
-            //        Model.RedValueMultiplier = e.NewValue;
+            //        Model.RedValueMultiplier = e.NewValue;x
             //        break;
             //    case "GreenMix":
             //        Model.GreenValueMultiplier = e.NewValue;
@@ -67,10 +86,25 @@ namespace PerlinControls
 
         public void Confirm_Changes(object sender, RoutedEventArgs e)
         {
-            Model.RedValueMultiplier = RedMix.Value;
-            Model.GreenValueMultiplier = GreenMix.Value;
-            Model.BlueValueMultiplier = BlueMix.Value;
-            SwapTime[0] = 10;
+
+            if ((int)Octaves.Value != OldOctaves || Persistence.Value != OldPersistence ||
+                (int)Frequency.Value != OldFrequency || (int)Amplitude.Value != OldAmplitude)
+            {
+                SwapTime = PerlinReInit.All;
+            }
+            else
+            {
+                SwapTime = PerlinReInit.Color;
+            }
+
+            OldRed = Model.RedValueMultiplier = RedMix.Value;
+            OldGreen = Model.GreenValueMultiplier = GreenMix.Value;
+            OldBlue = Model.BlueValueMultiplier = BlueMix.Value;
+            OldOctaves = Model.PerlinOctaves = (int)Octaves.Value;
+            OldPersistence = Model.PerlinPersistence = Persistence.Value;
+            OldFrequency = Model.PerlinFrequency = (int)Frequency.Value;
+            OldAmplitude = Model.PerlinAmplitude = (int)Amplitude.Value;
+
 
         }
     }

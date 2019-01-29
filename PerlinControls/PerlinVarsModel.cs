@@ -63,7 +63,70 @@ namespace PerlinControls
                 DB.StringSet("Perlin-BlueNoiseMultiplier", value);
             }
         }
-
+        public int PerlinOctaves
+        {
+            get
+            {
+                if (!DB.KeyExists("Perlin-Octaves"))
+                {
+                    DB.StringSet("Perlin-Octaves", 25);
+                    return 25;
+                }
+                return (int)DB.StringGet("Perlin-Octaves");
+            }
+            set
+            {
+                DB.StringSet("Perlin-Octaves", value);
+            }
+        }
+        public double PerlinPersistence
+        {
+            get
+            {
+                if (!DB.KeyExists("Perlin-Persistence"))
+                {
+                    DB.StringSet("Perlin-Persistence", .25);
+                    return .25;
+                }
+                return (double)DB.StringGet("Perlin-Persistence");
+            }
+            set
+            {
+                DB.StringSet("Perlin-Persistence", value);
+            }
+        }
+        public int PerlinFrequency
+        {
+            get
+            {
+                if (!DB.KeyExists("Perlin-Frequency"))
+                {
+                    DB.StringSet("Perlin-Frequency", 4);
+                    return 4;
+                }
+                return (int)DB.StringGet("Perlin-Frequency");
+            }
+            set
+            {
+                DB.StringSet("Perlin-Frequency", value);
+            }
+        }
+        public int PerlinAmplitude
+        {
+            get
+            {
+                if (!DB.KeyExists("Perlin-Amplitude"))
+                {
+                    DB.StringSet("Perlin-Amplitude", 32);
+                    return 32;
+                }
+                return (int)DB.StringGet("Perlin-Amplitude");
+            }
+            set
+            {
+                DB.StringSet("Perlin-Amplitude", value);
+            }
+        }
 
     }
 }

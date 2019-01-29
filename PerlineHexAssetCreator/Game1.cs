@@ -26,13 +26,13 @@ namespace PerlineHexAssetCreator
         SpriteBatch spriteBatch;
         Texture2D canvas;
         Rectangle tracedSize;
-        UInt32[] pixels;
+        Color[] pixels;
         private int[,] BackingNoiseR;
         private int[,] BackingNoiseG;
         private int[,] BackingNoiseB;
-        private MainWindow Mw;
-        private int[] SwapTime = new int[] {1};
 
+        private MainWindow Mw;
+        private PerlinVarsModel PerlinVars;
 
         private int HexSize = 100;
         public Game1()
@@ -48,10 +48,11 @@ namespace PerlineHexAssetCreator
         /// </summary>
         protected override void Initialize()
         {
+            PerlinVars = new PerlinVarsModel();
             // TODO: Add your initialization logic here
             tracedSize = GraphicsDevice.PresentationParameters.Bounds;
             canvas = new Texture2D(GraphicsDevice, tracedSize.Width, tracedSize.Height, false, SurfaceFormat.Color);
-            pixels = new UInt32[tracedSize.Width * tracedSize.Height];
+            pixels = new Color[tracedSize.Width * tracedSize.Height];
             this.IsMouseVisible = true;
 
             //https://stackoverflow.com/questions/2329978/the-calling-thread-must-be-sta-because-many-ui-components-require-this
@@ -63,9 +64,10 @@ namespace PerlineHexAssetCreator
             {
                 var app = new App();
                 Mw = new MainWindow();
-                Mw.SetSwap(SwapTime);
+                Mw.SetSwap(GenNewNoise);
                 app.Run(Mw);
             });
+
             t.SetApartmentState(ApartmentState.STA);
             t.Start();
             base.Initialize();
@@ -99,68 +101,49 @@ namespace PerlineHexAssetCreator
         /// </summary>
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         /// 
-        private bool GenNewNoise = true;
 
-        private double[,,] NoiseArrayR;
+        private MainWindow.PerlinReInit GenNewNoise = MainWindow.PerlinReInit.All;
+
+        private double[,,] NoiseArray;
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-            if (GenNewNoise)
+            if (GenNewNoise != MainWindow.PerlinReInit.None)
             {
-                NoiseArrayR = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
-                    width: tracedSize.Width,
-                    depth: 1,
-                    octaves: 25,
-                    persistence: .25,
-                    frequency: 4,
-                    amplitude: 32
-                );
-                var noiseColorsR = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, NoiseArrayR);
-                noiseColorsR = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColorsR, .5);
-                BackingNoiseR = noiseColorsR;
-                
-                var noiseArrayG = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
-                    width: tracedSize.Width,
-                    depth: 1,
-                    octaves: 25,
-                    persistence: .25,
-                    frequency: 8,
-                    amplitude: 16
-                );
-                var noiseColorsG = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, noiseArrayG);
-                noiseColorsG = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColorsG, 1.5);
-
-                BackingNoiseG = noiseColorsG;
-
-                var noiseArrayB = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
-                    width: tracedSize.Width,
-                    depth: 1,
-                    octaves: 25,
-                    persistence: .25,
-                    frequency: 8,
-                    amplitude: 16
-                );
-                var noiseColorsB = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, noiseArrayB);
-                noiseColorsB = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColorsB, .5);
-                BackingNoiseB = noiseColorsB;
-
-                for (int i = 0; i < NoiseArrayR.GetLength(0);i++)
+                if (GenNewNoise == MainWindow.PerlinReInit.All)
                 {
-                    for (int j = 0; j < NoiseArrayR.GetLength(1); j++)
+                    NoiseArray = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
+                        width: tracedSize.Width,
+                        depth: 1,
+                        octaves: PerlinVars.PerlinOctaves,
+                        persistence: PerlinVars.PerlinPersistence,
+                        frequency: PerlinVars.PerlinFrequency,
+                        amplitude: PerlinVars.PerlinAmplitude
+                    );
+                }
+                //we can not do this everytime
+                var noiseColors = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, NoiseArray);
+                BackingNoiseR = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColors.Clone() as int[,], PerlinVars.RedValueMultiplier);
+                BackingNoiseG = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColors.Clone() as int[,], PerlinVars.GreenValueMultiplier);
+                BackingNoiseB = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColors.Clone() as int[,], PerlinVars.BlueValueMultiplier);
+
+                for (int i = 0; i < NoiseArray.GetLength(0);i++)
+                {
+                    for (int j = 0; j < NoiseArray.GetLength(1); j++)
                     {
-                        Int32 noiseColorR = noiseColorsR[i, j];
-                        Int32 noiseColorG = noiseColorsG[i, j];
-                        Int32 noiseColorB = noiseColorsB[i, j];
-                        //no A on this atm, toggleable make
-                        var hexNoiseVal = "FF" +  noiseColorR.ToString("X") + noiseColorG.ToString("X") + noiseColorB.ToString("X");
-                        var hexVal = (uint)int.Parse(hexNoiseVal, System.Globalization.NumberStyles.HexNumber);
-                        pixels[i*NoiseArrayR.GetLength(1) + j] = hexVal; //0xFF000000;
+                        //no A on this atm, toggleable make 
+                        //var hexNoiseVal = "FF" +  noiseColorR.ToString("X") + noiseColorG.ToString("X") + noiseColorB.ToString("X");
+                       // var hexNoiseVal = "FF" + BackingNoiseR[i,j].ToString("X") + BackingNoiseG[i, j].ToString("X") + BackingNoiseB[i, j].ToString("X");
+                        var hexVal = new Color(BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]);
+                        //var hexVal = (uint)int.Parse(hexNoiseVal, System.Globalization.NumberStyles.HexNumber);
+                        pixels[i*NoiseArray.GetLength(1) + j] = hexVal; //0xFF000000;
+                        ;
                     }
                 }
-                canvas.SetData<UInt32>(pixels, 0, tracedSize.Width * tracedSize.Height);
+                canvas.SetData<Color>(pixels, 0, tracedSize.Width * tracedSize.Height);
 
-                GenNewNoise = false;
+                GenNewNoise = MainWindow.PerlinReInit.None;
             }
             // TODO: Add your update logic here
             base.Update(gameTime);
@@ -175,7 +158,7 @@ namespace PerlineHexAssetCreator
             GraphicsDevice.Clear(Color.White);
             var a = ClickState;
             if (ClickState == ButtonState.Pressed && Mouse.GetState().LeftButton == ButtonState.Released && this.IsActive && System.Windows.Forms.Form.ActiveForm ==
-    (System.Windows.Forms.Control.FromHandle(Window.Handle) as System.Windows.Forms.Form))
+    (System.Windows.Forms.Control.FromHandle(Window.Handle) as System.Windows.Forms.Form) && Keyboard.GetState().IsKeyDown(Keys.A))
             {
                 var xpos = Mouse.GetState().X;
                 var ypos = Mouse.GetState().Y;
@@ -208,26 +191,19 @@ namespace PerlineHexAssetCreator
             {
                 for (var j = Math.Max(0, y - (HexSize / 2)); j < Math.Min(tracedSize.Height, y + HexSize / 2); j++)
                 {
-                    
-                    ;
-                    //if(i > x - 5 && i < x + 5  && j > y - 5 && j < y + 5)
-                    //    bmImage.SetPixel(i,
-                    //        j,
-                    //        System.Drawing.Color.Red);
-                    if(InSameHexAsCenter(x,y,i,j))
-                        bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(255, BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]));
-                    else
-                        bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(0, BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]));
+                    logText.AppendLine($"Attempting pixel {i} {j}");
 
-                    //logText.Append( "Setting pixel "  + (i - Math.Max(0, x - (HexSize / 2))).ToString() + " " + (j - Math.Max(0, y - (HexSize / 2))).ToString() + ((hexAt["X"] == hexClicked["X"] && hexAt["Y"] == hexClicked["Y"]) ? " color " : " transparent") + BackingNoise[i,j].ToString() + "\r\n");
+                    bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(InSameHexAsCenter(x, y, i, j)? 255 : 0, BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]));
+
+                    logText.AppendLine("Setting pixel color" + ((InSameHexAsCenter(x, y, i, j)) ? " color " : " transparent") + BackingNoiseR[i, j].ToString() +  " " + BackingNoiseG[i, j].ToString() + " " + BackingNoiseB[i, j].ToString() + "\r\n");
+                    logText.AppendLine("_____");
                     ;
-                    //bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.Red);
 
                 }
             }
             File.AppendAllText(Path.Combine(Environment.CurrentDirectory, "pixelLog.txt"), logText.ToString());
-            bmImage.Save(Path.Combine(@"C:\Users\kk\Desktop\Hexes\Hexes\Modules\MainModule\Content\Backgrounds", "capturedHex.png"));
-            Process.Start(Path.Combine(@"C:\Users\kk\Desktop\Hexes\Hexes\Modules\MainModule\Content\Backgrounds", "capturedHex.png"));
+            bmImage.Save(Path.Combine(Environment.CurrentDirectory, "capturedHex.png"));
+            Process.Start(Path.Combine(Environment.CurrentDirectory, "capturedHex.png"));
 
         }
 
@@ -254,7 +230,7 @@ namespace PerlineHexAssetCreator
             };
         }
 
-        public void ReInitCanvas()
+        public void CheckReInitCanvas()
         {
             ;
         }
