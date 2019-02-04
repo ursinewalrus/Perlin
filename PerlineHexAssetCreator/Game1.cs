@@ -27,6 +27,7 @@ namespace PerlineHexAssetCreator
         Texture2D canvas;
         Rectangle tracedSize;
         Color[] pixels;
+        //we can get rid of these with some refactoring I guesssss
         private int[,] BackingNoiseR;
         private int[,] BackingNoiseG;
         private int[,] BackingNoiseB;
@@ -102,16 +103,20 @@ namespace PerlineHexAssetCreator
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         /// 
 
-        private MainWindow.PerlinReInit GenNewNoise = MainWindow.PerlinReInit.All;
+        private SignalPass GenNewNoise = new SignalPass();
 
         private double[,,] NoiseArray;
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-            if (GenNewNoise != MainWindow.PerlinReInit.None)
+            if(GenNewNoise.InitState != SignalPass.ReInit.None)
             {
-                if (GenNewNoise == MainWindow.PerlinReInit.All)
+                ;
+            }
+            if (GenNewNoise.InitState != SignalPass.ReInit.None || lastX != currentX)
+            { 
+                if (GenNewNoise.InitState == SignalPass.ReInit.All)
                 {
                     NoiseArray = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
                         width: tracedSize.Width,
@@ -128,22 +133,28 @@ namespace PerlineHexAssetCreator
                 BackingNoiseG = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColors.Clone() as int[,], PerlinVars.GreenValueMultiplier);
                 BackingNoiseB = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColors.Clone() as int[,], PerlinVars.BlueValueMultiplier);
 
-                for (int i = 0; i < NoiseArray.GetLength(0);i++)
+                for (int i = 0; i < BackingNoiseR.GetLength(0);i++)
                 {
-                    for (int j = 0; j < NoiseArray.GetLength(1); j++)
+                    for (int j = 0; j < BackingNoiseR.GetLength(1); j++)
                     {
-                        //no A on this atm, toggleable make 
-                        //var hexNoiseVal = "FF" +  noiseColorR.ToString("X") + noiseColorG.ToString("X") + noiseColorB.ToString("X");
-                       // var hexNoiseVal = "FF" + BackingNoiseR[i,j].ToString("X") + BackingNoiseG[i, j].ToString("X") + BackingNoiseB[i, j].ToString("X");
-                        var hexVal = new Color(BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]);
-                        //var hexVal = (uint)int.Parse(hexNoiseVal, System.Globalization.NumberStyles.HexNumber);
-                        pixels[i*NoiseArray.GetLength(1) + j] = hexVal; //0xFF000000;
+                        Color hexVal;
+                        if (j > lastX - 5 && j < lastX + 5 && i < lastY + 5 && i > lastY - 5)
+                        {
+                            hexVal = Color.Red;
+                            lastX = currentX;
+                            lastY = currentY;
+                        }
+                        else
+                            hexVal = new Color(BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]);
+                        pixels[i*NoiseArray.GetLength(1) + j] = hexVal; 
                         ;
                     }
                 }
                 canvas.SetData<Color>(pixels, 0, tracedSize.Width * tracedSize.Height);
-
-                GenNewNoise = MainWindow.PerlinReInit.None;
+                Stream stream = File.Create(Path.Combine(Environment.CurrentDirectory, "ActualCanvas.png"));
+                canvas.SaveAsPng(stream, canvas.Width, canvas.Height);
+                stream.Dispose();
+                GenNewNoise.InitState = SignalPass.ReInit.None;
             }
             // TODO: Add your update logic here
             base.Update(gameTime);
@@ -182,20 +193,33 @@ namespace PerlineHexAssetCreator
         /*
          * The horizontal distance between adjacent hexagon centers is w * 3/4. The vertical distance between adjacent hexagon centers is h.
          */
+        int lastX = -1;
+        int lastY = -1;
+        int currentX = -1;
+        int currentY = -1;
+
         public void BuildImage(int x, int y)
         {
+            lastX = currentX;
+            lastY = currentY;
+            currentX = x;
+            currentY = y;
+
+            Color[] colorArr = new Color[canvas.Width * canvas.Height];
+            canvas.GetData(colorArr);
+
             var bmImage = new Bitmap(HexSize, HexSize);
             //var hexClicked = SelectedHex(x, y);
             var logText = new StringBuilder();
-            for (var i = Math.Max(0, x - (HexSize / 2)); i < Math.Min(tracedSize.Width, x + HexSize / 2); i++)
+            for (var i = Math.Max(0, x - (HexSize / 2)); i < Math.Min(BackingNoiseR.GetLength(1), x + HexSize / 2); i++)
             {
-                for (var j = Math.Max(0, y - (HexSize / 2)); j < Math.Min(tracedSize.Height, y + HexSize / 2); j++)
+                for (var j = Math.Max(0, y - (HexSize / 2)); j < Math.Min(BackingNoiseR.GetLength(0), y + HexSize / 2); j++)
                 {
                     logText.AppendLine($"Attempting pixel {i} {j}");
 
-                    bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(InSameHexAsCenter(x, y, i, j)? 255 : 0, BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]));
+                    bmImage.SetPixel(i - Math.Max(0, x - (HexSize / 2)), j - Math.Max(0, y - (HexSize / 2)), System.Drawing.Color.FromArgb(InSameHexAsCenter(x, y, i, j)? 255 : 0, colorArr[j * canvas.Width + i].R, colorArr[j * canvas.Width + i].G, colorArr[j * canvas.Width + i].B));
 
-                    logText.AppendLine("Setting pixel color" + ((InSameHexAsCenter(x, y, i, j)) ? " color " : " transparent") + BackingNoiseR[i, j].ToString() +  " " + BackingNoiseG[i, j].ToString() + " " + BackingNoiseB[i, j].ToString() + "\r\n");
+                    //logText.AppendLine("Setting pixel color" + ((InSameHexAsCenter(x, y, i, j)) ? " color " : " transparent") + BackingNoiseR[i, j].ToString() +  " " + BackingNoiseG[i, j].ToString() + " " + BackingNoiseB[i, j].ToString() + "\r\n");
                     logText.AppendLine("_____");
                     ;
 

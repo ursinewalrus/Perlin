@@ -14,6 +14,7 @@ using System.Windows.Navigation;
 using System.Windows.Shapes;
 using Microsoft.Xna.Framework;
 using StackExchange.Redis;
+using static PerlinControls.SignalPass;
 
 namespace PerlinControls
 {
@@ -25,7 +26,7 @@ namespace PerlinControls
     {
         private IDatabase DB;
         private PerlinVarsModel Model;
-        private PerlinReInit SwapTime;
+        private SignalPass SwapTime;
         private double OldRed;
         private double OldGreen;
         private double OldBlue;
@@ -33,14 +34,6 @@ namespace PerlinControls
         private double OldPersistence;
         private int OldFrequency;
         private int OldAmplitude;
-
-
-        public enum PerlinReInit
-        {
-            All,
-            Color,
-            None
-        }
 
         public MainWindow()
         {
@@ -59,7 +52,7 @@ namespace PerlinControls
             ;
         }
 
-        public void SetSwap(PerlinReInit swap)
+        public void SetSwap(SignalPass swap)
         {
             SwapTime = swap;
         }
@@ -90,11 +83,11 @@ namespace PerlinControls
             if ((int)Octaves.Value != OldOctaves || Persistence.Value != OldPersistence ||
                 (int)Frequency.Value != OldFrequency || (int)Amplitude.Value != OldAmplitude)
             {
-                SwapTime = PerlinReInit.All;
+                SwapTime.InitState = ReInit.All;
             }
             else
             {
-                SwapTime = PerlinReInit.Color;
+                SwapTime.InitState = ReInit.Color;
             }
 
             OldRed = Model.RedValueMultiplier = RedMix.Value;

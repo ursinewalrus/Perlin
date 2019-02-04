@@ -98,9 +98,10 @@ namespace PerlinGenerator
         {
 
             //upper, leftmost cord
-            int cubeX = (int)x % 255;
-            int cubeY = (int)y % 255;
-            int cubeZ = (int)z % 255;
+            //might this be wonky somehow
+            int cubeX = (int)Math.Abs(x % 255);
+            int cubeY = (int)Math.Abs(y % 255);
+            int cubeZ = (int)Math.Abs(z % 255);
 
             //location in cube
             var xf = x - (int)x;
