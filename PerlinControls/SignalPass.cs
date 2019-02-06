@@ -12,6 +12,8 @@ namespace PerlinControls
         {
             None,
             Color,
+            NumGradients,
+            Lines,
             All
         }
         public ReInit InitState = ReInit.All;

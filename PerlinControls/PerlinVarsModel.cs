@@ -63,6 +63,24 @@ namespace PerlinControls
                 DB.StringSet("Perlin-BlueNoiseMultiplier", value);
             }
         }
+
+        public int NumberOfColorGradients
+        {
+            get
+            {
+                if (!DB.KeyExists("Perlin-NumberOfColorGradients"))
+                {
+                    DB.StringSet("Perlin-NumberOfColorGradients", 8);
+                    return 8;
+                }
+                return (int) DB.StringGet("Perlin-NumberOfColorGradients");
+            }
+            set
+            {
+                DB.StringSet("Perlin-NumberOfColorGradients", value);
+            }
+        }
+
         public int PerlinOctaves
         {
             get
@@ -72,7 +90,7 @@ namespace PerlinControls
                     DB.StringSet("Perlin-Octaves", 25);
                     return 25;
                 }
-                return (int)DB.StringGet("Perlin-Octaves");
+                return (int) DB.StringGet("Perlin-Octaves");
             }
             set
             {
@@ -127,6 +145,69 @@ namespace PerlinControls
                 DB.StringSet("Perlin-Amplitude", value);
             }
         }
-
+        public bool HorizontalLines
+        {
+            get
+            {
+                if (!DB.KeyExists("Perlin-HorizontalLines"))
+                {
+                    DB.StringSet("Perlin-HorizontalLines", "false");
+                    return false;
+                }
+                return (bool)DB.StringGet("Perlin-HorizontalLines");
+            }
+            set
+            {
+                DB.StringSet("Perlin-HorizontalLines", value);
+            }
+        }
+        public bool VerticalLines
+        {
+            get
+            {
+                if (!DB.KeyExists("Perlin-VerticalLines"))
+                {
+                    DB.StringSet("Perlin-VerticalLines", "false");
+                    return false;
+                }
+                return (bool)DB.StringGet("Perlin-VerticalLines");
+            }
+            set
+            {
+                DB.StringSet("Perlin-VerticalLines", value);
+            }
+        }
+        public int HorizontalLinesPer
+        {
+            get
+            {
+                if (!DB.KeyExists("Perlin-HorizontalLinesPer"))
+                {
+                    DB.StringSet("Perlin-HorizontalLinesPer", 50);
+                    return 50;
+                }
+                return (int)DB.StringGet("Perlin-HorizontalLinesPer");
+            }
+            set
+            {
+                DB.StringSet("Perlin-HorizontalLinesPer", value);
+            }
+        }
+        public int VerticalLinesPer
+        {
+            get
+            {
+                if (!DB.KeyExists("Perlin-VerticalLinesPer"))
+                {
+                    DB.StringSet("Perlin-VerticalLinesPer", 50);
+                    return 50;
+                }
+                return (int)DB.StringGet("Perlin-VerticalLinesPer");
+            }
+            set
+            {
+                DB.StringSet("Perlin-VerticalLinesPer", value);
+            }
+        }
     }
 }

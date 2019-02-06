@@ -5,59 +5,76 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:PerlinControls"
         mc:Ignorable="d"
-        Title="MainWindow" Height="450" Width="525">
+        Title="MainWindow" Height="500" Width="1050">
     <Window.Resources>
         <Style x:Key="SliderStyle" TargetType="{x:Type Slider}">
             <Setter Property="Height" Value="40"/>
             <Setter Property="Width" Value="255"/>
         </Style>
+        <Style x:Key="LabelStyle" TargetType="{x:Type Label}">
+            <!--<Setter Property="Height" Value="30"/>-->
+            <Setter Property="Width" Value="100"/>
+        </Style>
+        <Style x:Key="LabelStyle2" TargetType="{x:Type Label}">
+            <!--<Setter Property="Height" Value="30"/>-->
+            <Setter Property="Width" Value="120"/>
+        </Style>
     </Window.Resources>
     <Grid>
         <StackPanel Width="400px"
-                    HorizontalAlignment="Left">
+                    HorizontalAlignment="Left" Grid.Column="0">
             <Label Content="RGB Noise Color Multiplier"></Label>
 
             <DockPanel>
-                <Label Width="75px" Content="Red" Target="{Binding ElementName=RedMix}"></Label>
+                <Label  Content="Red" Target="{Binding ElementName=RedMix}" Style="{StaticResource LabelStyle}"></Label>
                 <TextBox Text="{Binding ElementName=RedMix, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right" Width="25px" Height="30px"></TextBox>
                 <Slider 
                     Name="RedMix"
                     Maximum="2"
                     Ticks="100"
                     Style="{StaticResource SliderStyle}"
-                    ValueChanged="SliderValChanged"
                 ></Slider>
             </DockPanel>
 
             <DockPanel>
-                <Label Width="75px" Content="Green" Target="{Binding ElementName=GreenMix}" ></Label>
+                <Label  Content="Green" Target="{Binding ElementName=GreenMix}" Style="{StaticResource LabelStyle}"></Label>
                 <TextBox Text="{Binding ElementName=GreenMix, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"  Width="25px" Height="30px"></TextBox>
                 <Slider 
                     Name="GreenMix"
                      Maximum="2"
                     Ticks="100"
                     Style="{StaticResource SliderStyle}"   
-                    ValueChanged="SliderValChanged"
                 ></Slider>
             </DockPanel>
 
             <DockPanel>
-                <Label Width="75px" Content="Blue" Target="{Binding ElementName=BlueMix}"></Label>
+                <Label  Content="Blue" Target="{Binding ElementName=BlueMix}" Style="{StaticResource LabelStyle}"></Label>
                 <TextBox Text="{Binding ElementName=BlueMix, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"  Width="25px" Height="30px"></TextBox>
                 <Slider
                     Name="BlueMix"
                     Maximum="2"
                     Ticks="100"
                     Style="{StaticResource SliderStyle}"    
-                    ValueChanged="SliderValChanged"
                 ></Slider>
             </DockPanel>
-            
+
+            <DockPanel>
+                <Label  Content="Color Gradients" Target="{Binding ElementName=ColorGradients}" Style="{StaticResource LabelStyle}"></Label>
+                <TextBox Text="{Binding ElementName=ColorGradients, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"  Width="25px" Height="30px"></TextBox>
+                <Slider
+                    Name="ColorGradients"
+                    Maximum="25"
+                    TickFrequency="1"
+                    IsSnapToTickEnabled="True"
+                    Style="{StaticResource SliderStyle}"    
+                ></Slider>
+            </DockPanel>
+
             <Separator></Separator>
             <Label Content="Perlin Noise Variables"></Label>
 
             <DockPanel>
-                <Label Width="75px" Content="Octaves" Target="{Binding ElementName=Octaves}"></Label>
+                <Label  Content="Octaves" Target="{Binding ElementName=Octaves}" Style="{StaticResource LabelStyle}"></Label>
                 <TextBox Text="{Binding ElementName=Octaves, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"  Width="25px" Height="30px"></TextBox>
                 <Slider
                     Name="Octaves"
@@ -65,23 +82,21 @@
                     TickFrequency="1"
                     IsSnapToTickEnabled="True"
                     Style="{StaticResource SliderStyle}"    
-                    ValueChanged="SliderValChanged"
                 ></Slider>
             </DockPanel>
 
             <DockPanel>
-                <Label Width="75px" Content="Persistence" Target="{Binding ElementName=Persistence}"></Label>
+                <Label  Content="Persistence" Target="{Binding ElementName=Persistence}" Style="{StaticResource LabelStyle}"></Label>
                 <TextBox Text="{Binding ElementName=Persistence, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"  Width="25px" Height="30px"></TextBox>
                 <Slider
                     Name="Persistence"
                     Maximum="2"
                     Style="{StaticResource SliderStyle}"    
-                    ValueChanged="SliderValChanged"
                 ></Slider>
             </DockPanel>
 
             <DockPanel>
-                <Label Width="75px" Content="Frequency" Target="{Binding ElementName=Frequency}"></Label>
+                <Label  Content="Frequency" Target="{Binding ElementName=Frequency}" Style="{StaticResource LabelStyle}"></Label>
                 <TextBox Text="{Binding ElementName=Frequency, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"  Width="25px" Height="30px"></TextBox>
                 <Slider
                     Name="Frequency"
@@ -89,12 +104,11 @@
                     TickFrequency="1"
                     IsSnapToTickEnabled="True"
                     Style="{StaticResource SliderStyle}"    
-                    ValueChanged="SliderValChanged"
                 ></Slider>
             </DockPanel>
 
             <DockPanel>
-                <Label Width="75px" Content="Amplitude" Target="{Binding ElementName=Amplitude}"></Label>
+                <Label  Content="Amplitude" Target="{Binding ElementName=Amplitude}" Style="{StaticResource LabelStyle}"></Label>
                 <TextBox Text="{Binding ElementName=Amplitude, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"  Width="25px" Height="30px"></TextBox>
                 <Slider
                     Name="Amplitude"
@@ -102,11 +116,54 @@
                     TickFrequency="1"
                     IsSnapToTickEnabled="True"
                     Style="{StaticResource SliderStyle}"    
-                    ValueChanged="SliderValChanged"
                 ></Slider>
             </DockPanel>
 
             <Button Height="50px" Width="100px" Content="Confirm" Click="Confirm_Changes" Margin="150,0" RenderTransformOrigin="0.47,1.42"/>
         </StackPanel>
+        <StackPanel                    
+            HorizontalAlignment="Left" Grid.Column="1">
+            <Label Content="Wiggle Grid"></Label>
+            
+            <DockPanel>
+                <CheckBox Name="HorizontalLines">Horizontal Lines</CheckBox>
+            </DockPanel>
+            
+            <DockPanel>
+                <CheckBox Name="VerticalLines">Vertical Lines</CheckBox>
+            </DockPanel>
+
+            <DockPanel>
+                <TextBlock Width="100px" TextWrapping="WrapWithOverflow">Horizonal Line Every X Pixels</TextBlock>
+                <TextBox Text="{Binding ElementName=HorizontalPer, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"  Width="25px" Height="30px"></TextBox>
+                <Slider
+                    Name="HorizontalPer"
+                    Minimum="1"
+                    Maximum="500"
+                    TickFrequency="1"
+                    IsSnapToTickEnabled="True"
+                    Style="{StaticResource SliderStyle}"    
+                ></Slider>
+            </DockPanel>
+
+            <DockPanel>
+                <TextBlock Width="100px" TextWrapping="WrapWithOverflow">Vertical Line Every X Pixels</TextBlock>
+                <TextBox Text="{Binding ElementName=VerticalPer, Path=Value, UpdateSourceTrigger=PropertyChanged}" DockPanel.Dock="Right"  Width="25px" Height="30px"></TextBox>
+                <Slider
+                    Name="VerticalPer"
+                    Minimum="1"
+                    Maximum="500"
+                    TickFrequency="1"
+                    IsSnapToTickEnabled="True"
+                    Style="{StaticResource SliderStyle}"    
+                ></Slider>
+            </DockPanel>
+
+        </StackPanel>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="400"></ColumnDefinition>
+            <ColumnDefinition Width="400"></ColumnDefinition>
+
+        </Grid.ColumnDefinitions>
     </Grid>
 </Window>

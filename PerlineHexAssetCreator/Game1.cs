@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Drawing;
 using System.IO;
+using System.Linq;
 using System.Text;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
@@ -103,20 +104,21 @@ namespace PerlineHexAssetCreator
         /// <param name="gameTime">Provides a snapshot of timing values.</param>
         /// 
 
-        private SignalPass GenNewNoise = new SignalPass();
+        private List<SignalPass.ReInit> GenNewNoise = new List<SignalPass.ReInit>() { SignalPass.ReInit.All };
 
+        private int[,] NoiseColors;
         private double[,,] NoiseArray;
         protected override void Update(GameTime gameTime)
         {
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-            if(GenNewNoise.InitState != SignalPass.ReInit.None)
+            //if(GenNewNoise.Contains(SignalPass.ReInit.None))
+            //{
+            //    ;
+            //}
+            if (GenNewNoise.Any())
             {
-                ;
-            }
-            if (GenNewNoise.InitState != SignalPass.ReInit.None || lastX != currentX)
-            { 
-                if (GenNewNoise.InitState == SignalPass.ReInit.All)
+                if (GenNewNoise.Contains(SignalPass.ReInit.All))
                 {
                     NoiseArray = PerlinGenerator.PerlinGenerator.GenerateNoiseDimensions(height: tracedSize.Height,
                         width: tracedSize.Width,
@@ -127,34 +129,86 @@ namespace PerlineHexAssetCreator
                         amplitude: PerlinVars.PerlinAmplitude
                     );
                 }
-                //we can not do this everytime
-                var noiseColors = PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(8, NoiseArray);
-                BackingNoiseR = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColors.Clone() as int[,], PerlinVars.RedValueMultiplier);
-                BackingNoiseG = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColors.Clone() as int[,], PerlinVars.GreenValueMultiplier);
-                BackingNoiseB = PerlinGenerator.PerlinGenerator.Multiply2dArray(noiseColors.Clone() as int[,], PerlinVars.BlueValueMultiplier);
-
-                for (int i = 0; i < BackingNoiseR.GetLength(0);i++)
+                if (GenNewNoise.Contains(SignalPass.ReInit.All) ||
+                    GenNewNoise.Contains(SignalPass.ReInit.NumGradients))
                 {
-                    for (int j = 0; j < BackingNoiseR.GetLength(1); j++)
+                    NoiseColors =
+                        PerlinGenerator.PerlinGenerator.Map3DNoiseArrayToImage(PerlinVars.NumberOfColorGradients,
+                            NoiseArray);
+                }
+                BackingNoiseR = PerlinGenerator.PerlinGenerator.Multiply2dArray(NoiseColors.Clone() as int[,],
+                    PerlinVars.RedValueMultiplier);
+                BackingNoiseG = PerlinGenerator.PerlinGenerator.Multiply2dArray(NoiseColors.Clone() as int[,],
+                    PerlinVars.GreenValueMultiplier);
+                BackingNoiseB = PerlinGenerator.PerlinGenerator.Multiply2dArray(NoiseColors.Clone() as int[,],
+                    PerlinVars.BlueValueMultiplier);
+
+
+                var height = BackingNoiseR.GetLength(0);
+                var width = BackingNoiseR.GetLength(1);
+
+                for (int h = 0; h < height; h++)
+                {
+                    for (int w = 0; w < width; w++)
                     {
                         Color hexVal;
-                        if (j > lastX - 5 && j < lastX + 5 && i < lastY + 5 && i > lastY - 5)
-                        {
-                            hexVal = Color.Red;
-                            lastX = currentX;
-                            lastY = currentY;
-                        }
-                        else
-                            hexVal = new Color(BackingNoiseR[i, j], BackingNoiseG[i, j], BackingNoiseB[i, j]);
-                        pixels[i*NoiseArray.GetLength(1) + j] = hexVal; 
+                        //if (j > lastX - 5 && j < lastX + 5 && i < lastY + 5 && i > lastY - 5)
+                        //{
+                        //    hexVal = Color.Red;
+                        //    lastX = currentX;
+                        //    lastY = currentY;
+                        //}
+                        //else
+                        hexVal = new Color(BackingNoiseR[h, w], BackingNoiseG[h, w], BackingNoiseB[h, w]);
+                        pixels[h*width + w] = hexVal;
                         ;
                     }
                 }
-                canvas.SetData<Color>(pixels, 0, tracedSize.Width * tracedSize.Height);
+
+                #region 1dlines
+
+                //give this a discrete signal as well
+                if (PerlinVars.HorizontalLines || PerlinVars.VerticalLines)
+                {
+                    var wiggleMultiplier = 10f;
+                    for (int h = 0; h < height; h++) //variabalize 100
+                    {
+                        for (int w = 0; w < width; w++) //^inverse for other directional line^
+                        {
+                            //depth can always be 0 for a 1d line
+                            //this is between 0 and 1 right now right
+                            double noiseVal = NoiseArray[h, w, 0] - 1*-1;
+                            //this one d thing is realy easy to reason about...
+                            if (h%PerlinVars.HorizontalLinesPer == 0 && PerlinVars.HorizontalLines)
+                            {
+                                pixels[
+                                    (int)
+                                    Math.Min(Math.Max((h*width + w) + ((int) (noiseVal*wiggleMultiplier)*width), 0),
+                                        height*width - 1)
+                                ] = Color.Black;
+                            }
+
+                            if (w%PerlinVars.VerticalLinesPer == 0 && PerlinVars.VerticalLines)
+                            {
+                                //this needs to be thought out
+                                //pixels[
+                                //    (int)
+                                //    Math.Min(Math.Max((h * width + w) + ((int)(noiseVal * wiggleMultiplier) * width), 0),
+                                //        height * width - 1)
+                                //] = Color.Black;
+                            }
+                        }
+                        ;
+                    }
+                }
+
+                #endregion
+
+                canvas.SetData<Color>(pixels, 0, tracedSize.Width*tracedSize.Height);
                 Stream stream = File.Create(Path.Combine(Environment.CurrentDirectory, "ActualCanvas.png"));
                 canvas.SaveAsPng(stream, canvas.Width, canvas.Height);
                 stream.Dispose();
-                GenNewNoise.InitState = SignalPass.ReInit.None;
+                GenNewNoise.Clear();
             }
             // TODO: Add your update logic here
             base.Update(gameTime);
@@ -193,17 +247,9 @@ namespace PerlineHexAssetCreator
         /*
          * The horizontal distance between adjacent hexagon centers is w * 3/4. The vertical distance between adjacent hexagon centers is h.
          */
-        int lastX = -1;
-        int lastY = -1;
-        int currentX = -1;
-        int currentY = -1;
 
         public void BuildImage(int x, int y)
         {
-            lastX = currentX;
-            lastY = currentY;
-            currentX = x;
-            currentY = y;
 
             Color[] colorArr = new Color[canvas.Width * canvas.Height];
             canvas.GetData(colorArr);
