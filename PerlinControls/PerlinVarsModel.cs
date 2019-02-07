@@ -151,7 +151,7 @@ namespace PerlinControls
             {
                 if (!DB.KeyExists("Perlin-HorizontalLines"))
                 {
-                    DB.StringSet("Perlin-HorizontalLines", "false");
+                    DB.StringSet("Perlin-HorizontalLines", false);
                     return false;
                 }
                 return (bool)DB.StringGet("Perlin-HorizontalLines");
@@ -167,7 +167,7 @@ namespace PerlinControls
             {
                 if (!DB.KeyExists("Perlin-VerticalLines"))
                 {
-                    DB.StringSet("Perlin-VerticalLines", "false");
+                    DB.StringSet("Perlin-VerticalLines", false);
                     return false;
                 }
                 return (bool)DB.StringGet("Perlin-VerticalLines");

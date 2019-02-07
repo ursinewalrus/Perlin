@@ -63,6 +63,8 @@ namespace PerlinGenerator
         //http://developer.download.nvidia.com/books/HTML/gpugems/gpugems_ch05.html
         public static double[,,] GenerateNoiseDimensions(int height = 100, int width = 100, int depth = 1, int octaves = 1, double persistence = .25, double frequency = 1, double amplitude = 1)
         {
+            var rand = new Random();
+            var wiggle = rand.NextDouble();
             double[,,] noiseDims = new double[height, width, depth];
             for (int h = 1; h <= height; h++)
             {
@@ -77,9 +79,9 @@ namespace PerlinGenerator
                         for (int o = 0; o < octaves; o++)
                         {
                             noiseTotal +=
-                               GetNoiseValue((double)h / (double)height * freq,
-                                              (double)w / (double)width * freq,
-                                              (double)d / (double)depth * freq) * amp;
+                               GetNoiseValue((double)h / (double)height * freq + wiggle,
+                                              (double)w / (double)width * freq + wiggle,
+                                              (double)d / (double)depth * freq + wiggle) * amp;
                             maxNoiseTotal += amp;
                             amp *= persistence;
                             freq *= 2;
