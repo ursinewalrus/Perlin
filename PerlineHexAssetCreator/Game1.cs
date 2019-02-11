@@ -166,10 +166,16 @@ namespace PerlineHexAssetCreator
                 }
 
                 #region 1dlines
-
+                //fetch once
+                var pH = PerlinVars.HorizontalLines;
+                var pV = PerlinVars.VerticalLines;
                 //give this a discrete signal as well
-                if (PerlinVars.HorizontalLines || PerlinVars.VerticalLines)
+                if (pH || pV)
                 {
+                    //fetch once
+                    var hort = PerlinVars.HorizontalLinesPer;
+                    var vert = PerlinVars.VerticalLinesPer;
+
                     var wiggleMultiplier = 10f;
                     for (int h = 0; h < height; h++) //variabalize 100
                     {
@@ -179,7 +185,7 @@ namespace PerlineHexAssetCreator
                             //this is between 0 and 1 right now right
                             double noiseVal = NoiseArray[h, w, 0] - 1*-1;
                             //this one d thing is realy easy to reason about...
-                            if (h%PerlinVars.HorizontalLinesPer == 0 && PerlinVars.HorizontalLines)
+                            if (h%hort == 0 && pH)
                             {
                                 pixels[
                                     (int)
@@ -188,14 +194,14 @@ namespace PerlineHexAssetCreator
                                 ] = Color.Black;
                             }
 
-                            if (w%PerlinVars.VerticalLinesPer == 0 && PerlinVars.VerticalLines)
+                            if (w%vert == 0 && pV)
                             {
                                 //this needs to be thought out
-                                //pixels[
-                                //    (int)
-                                //    Math.Min(Math.Max((h * width + w) + ((int)(noiseVal * wiggleMultiplier) * width), 0),
-                                //        height * width - 1)
-                                //] = Color.Black;
+                                pixels[
+                                    (int)
+                                    Math.Min(Math.Max((h * width + w) + (int)(noiseVal * wiggleMultiplier), 0),
+                                        height * width - 1)
+                                ] = Color.Black;
                             }
                         }
                         ;

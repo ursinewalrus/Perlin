@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,8 +23,9 @@ namespace PerlinControls
     /// Interaction logic for MainWindow.xaml
     /// </summary>
     /// https://stackoverflow.com/questions/1405739/mvvm-tutorial-from-start-to-finish
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
+        #region dumb args
         private IDatabase DB;
         private PerlinVarsModel Model;
         private List<SignalPass.ReInit> SwapTime;
@@ -40,7 +42,7 @@ namespace PerlinControls
         private bool OldVertLines;
         private int OldHorizontalPer;
         private int OldVerticalPer;
-
+        #endregion
 
         public MainWindow()
         {
@@ -69,6 +71,9 @@ namespace PerlinControls
         {
             SwapTime = swap;
         }
+
+
+        public event PropertyChangedEventHandler PropertyChanged;
 
         public void Confirm_Changes(object sender, RoutedEventArgs e)
         {
@@ -104,6 +109,10 @@ namespace PerlinControls
             OldVertLines = Model.VerticalLines = (bool)VerticalLines.IsChecked;
             OldHorizontalPer = Model.HorizontalLinesPer = (int) HorizontalPer.Value;
             OldVerticalPer = Model.VerticalLinesPer = (int)VerticalPer.Value;
+
+            var l = LineColor.SelectedColor.Value;
+
+            ;
 
 
         }
